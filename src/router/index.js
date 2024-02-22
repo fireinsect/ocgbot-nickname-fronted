@@ -65,22 +65,41 @@ export const constantRoutes = [
     path: '/401',
     component: () => import('@/views/error-page/401'),
     hidden: true
-  },
+  }
+]
+export const asyncRoutes = [
   {
     path: '/',
     component: Layout,
     redirect: '/nickName',
+    meta: {
+      title: '别名列表',
+      icon: 'dashboard',
+      roles: ['admin', 'editor'] // you can set roles in root nav
+    },
     children: [
       {
         path: 'nickName',
         component: () => import('@/views/nickName/index'),
         name: 'nickName',
-        meta: { title: '别名管理', icon: 'dashboard', affix: true }
+        meta: {
+          title: '别名收集',
+          icon: 'dashboard',
+          roles: ['admin', 'editor']
+        }
       }
+      // {
+      //   path: 'nickNameAdmin',
+      //   component: () => import('@/views/nickNameAdmin/index'),
+      //   name: 'nickNameAdmin',
+      //   meta: {
+      //     title: '别名管理',
+      //     icon: 'dashboard',
+      //     roles: ['admin']
+      //   }
+      // }
     ]
-  }
-]
-export const asyncRoutes = [
+  },
   {
     path: '/permission',
     component: Layout,

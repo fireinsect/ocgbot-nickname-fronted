@@ -1,68 +1,3 @@
-<script>
-import { fetchList, updateArticle } from '@/api/article'
-import NickNameObject from '@/views/nickName/components/nickName'
-
-const calendarTypeOptions = [
-  { key: 0, display_name: '单卡' },
-  { key: 1, display_name: '一类卡' }
-]
-export default {
-  name: 'NickEdit',
-  props: {
-    data: NickNameObject
-  },
-  data() {
-    return {
-      calendarTypeOptions,
-      statusOptions: ['已上传', '待审核'],
-      dialogFormVisible: false,
-      listLoading: false,
-      queryList: [],
-      list: [],
-      rules: {
-        type: [{ required: true, message: '请选择类型', trigger: 'change' }],
-        cardName: [{ required: true, message: '请输入卡名', tigger: 'change' }],
-        nickName: [{ required: true, message: '请输入别名', tigger: 'change' }]
-      }
-    }
-  },
-  methods: {
-    updateData() {
-      const that = this
-      this.$refs['dataForm'].validate((valid) => {
-        if (valid) {
-          const tempData = Object.assign({}, this.data)
-          updateArticle(tempData).then(() => {
-            that.dialogVisible()
-            this.$notify({
-              title: 'Success',
-              message: '操作成功',
-              type: 'success',
-              duration: 2000
-            })
-          })
-        }
-      })
-    },
-    getList() {
-      this.listLoading = true
-      fetchList(this.queryList).then(response => {
-        this.list = response.data.items
-
-        // Just to simulate the time of the request
-        setTimeout(() => {
-          this.listLoading = false
-        }, 1.5 * 1000)
-      })
-    },
-    dialogVisible() {
-      this.list.clean()
-      this.$emit('dialogVisible', false)
-    }
-  }
-}
-</script>
-
 <template>
   <div>
     <div style="display: flex; flex-direction: row-reverse">
@@ -119,7 +54,7 @@ export default {
           <el-input
             v-model="data.remark"
             :autosize="{ minRows: 2, maxRows: 4}"
-            maxlength="20"
+            maxlength="30"
             show-word-limit
             type="textarea"
             placeholder="输入备注"
@@ -138,6 +73,71 @@ export default {
   </div>
 
 </template>
+
+<script>
+import { fetchCardList, updateNickName } from '@/api/article'
+import NickNameObject from '@/views/nickName/components/nickName'
+
+const calendarTypeOptions = [
+  { key: 0, display_name: '单卡' },
+  { key: 1, display_name: '一类卡' }
+]
+export default {
+  name: 'NickEdit',
+  props: {
+    data: NickNameObject
+  },
+  data() {
+    return {
+      calendarTypeOptions,
+      statusOptions: ['已上传', '待审核'],
+      dialogFormVisible: false,
+      listLoading: false,
+      queryList: [],
+      list: [],
+      rules: {
+        type: [{ required: true, message: '请选择类型', trigger: 'change' }],
+        cardName: [{ required: true, message: '请输入卡名', tigger: 'change' }],
+        nickName: [{ required: true, message: '请输入别名', tigger: 'change' }]
+      }
+    }
+  },
+  methods: {
+    updateData() {
+      const that = this
+      this.$refs['dataForm'].validate((valid) => {
+        if (valid) {
+          const tempData = Object.assign({}, this.data)
+          updateNickName(tempData).then(() => {
+            that.dialogVisible()
+            this.$notify({
+              title: 'Success',
+              message: '操作成功',
+              type: 'success',
+              duration: 2000
+            })
+          })
+        }
+      })
+    },
+    getList() {
+      this.listLoading = true
+      fetchCardList(this.queryList).then(response => {
+        this.list = response.data.items
+
+        // Just to simulate the time of the request
+        setTimeout(() => {
+          this.listLoading = false
+        }, 1.5 * 1000)
+      })
+    },
+    dialogVisible() {
+      this.list = []
+      this.$emit('dialogVisible', false)
+    }
+  }
+}
+</script>
 
 <style scoped>
 

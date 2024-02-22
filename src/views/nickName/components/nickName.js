@@ -1,5 +1,5 @@
 export default class NickNameObject {
-  constructor({ id, cardName, nickName, type, creator, remark, status }) {
+  constructor(id, cardName, nickName, type, creator, remark, status) {
     this.id = id
     this.cardName = cardName
     this.nickName = nickName

@@ -12,6 +12,7 @@ for (let i = 0; i < count; i++) {
     creator: '@first',
     reviewer: '@first',
     title: '@title(5, 10)',
+    remark: '@string(30)',
     content_short: 'mock data',
     forecast: '@float(0, 100, 2, 2)',
     importance: '@integer(1, 3)',

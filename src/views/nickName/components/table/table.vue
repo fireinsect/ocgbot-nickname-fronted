@@ -1,13 +1,13 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <el-input v-model="listQuery.cardName" placeholder="卡名" style="width: 400px;" class="filter-item" @keyup.enter.native="handleFilter" />
-      <el-input v-model="listQuery.nickName" placeholder="别名" style="width: 400px;" class="filter-item" @keyup.enter.native="handleFilter" />
+      <el-input v-model="listQuery.cardName" placeholder="卡名" style="width: 400px; margin-right: 5px" class="filter-item" />
+      <el-input v-model="listQuery.nickName" placeholder="别名" style="width: 400px; margin-right: 5px" class="filter-item" />
       <el-select v-model="listQuery.type" placeholder="类型" clearable class="filter-item" style="width: 130px">
         <el-option v-for="item in calendarTypeOptions" :key="item.key" :label="item.display_name+'('+item.key+')'" :value="item.key" />
       </el-select>
       <div style="display: inline-block;margin-left: 200px">
-        <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">
+        <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="handleSearch">
           搜索
         </el-button>
         <el-button class="filter-item" style="margin-left: 10px;" type="primary" icon="el-icon-edit" @click="handleCreate">
@@ -25,9 +25,8 @@
       fit
       highlight-current-row
       style="width: 100%;"
-      @sort-change="sortChange"
     >
-      <el-table-column label="ID" prop="id" sortable="custom" align="center" width="80" :class-name="getSortClass('id')">
+      <el-table-column label="ID" prop="id" align="center" width="80">
         <template slot-scope="{row}">
           <span>{{ row.id }}</span>
         </template>
@@ -47,6 +46,11 @@
           <span>{{ row.type | typeFilter }}</span>
         </template>
       </el-table-column>
+      <el-table-column label="备注" width="300px" align="center">
+        <template slot-scope="{row}">
+          <span>{{ row.remark }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="上传者" width="150px" align="center">
         <template slot-scope="{row}">
           <span>{{ row.creator }}</span>
@@ -64,26 +68,23 @@
           <el-button type="primary" size="mini" @click="handleUpdate(row)">
             编辑
           </el-button>
-          <el-button v-if="row.status!=='published'" size="mini" type="success" @click="handleModifyStatus(row,'published')">
+          <el-button v-if="row.status!==1" size="mini" type="success" :loading="row.loading" @click="handleModifyStatus(row,1)">
             录用
           </el-button>
-          <el-button v-if="row.status==='published'" size="mini" type="danger" @click="handleModifyStatus(row,'draft')">
+          <el-button v-if="row.status===1" size="mini" type="danger" :loading="row.loading" @click="handleModifyStatus(row,0)">
             取消
           </el-button>
         </template>
       </el-table-column>
     </el-table>
-
-    <!--    <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="getList" />-->
-
-    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
-      <NickEdit :data="temp" @dialogVisible="dialogVisible" />
+    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible" @close="closed">
+      <NickEdit ref="edit" :data="temp" @dialogVisible="dialogVisible" />
     </el-dialog>
   </div>
 </template>
 
 <script>
-import { fetchList } from '@/api/article'
+import { fetchList, updateNickName } from '@/api/article'
 import waves from '@/directive/waves' // waves directive
 import NickEdit from '@/views/nickName/components/table/components/edit.vue'
 import NickNameObject from '@/views/nickName/components/nickName'
@@ -122,98 +123,74 @@ export default {
       listLoading: true,
       temp: NickNameObject,
       listQuery: {
-        importance: undefined,
         cardName: undefined,
         nickName: undefined,
         type: undefined
       },
-      importanceOptions: [1, 2, 3],
       calendarTypeOptions,
-      sortOptions: [{ label: 'ID Ascending', key: '+id' }, { label: 'ID Descending', key: '-id' }],
       statusOptions: ['published', 'draft', 'deleted'],
-      showReviewer: false,
       dialogFormVisible: false,
       dialogStatus: '',
       textMap: {
         update: '编辑',
         create: '添加'
-      },
-      downloadLoading: false
+      }
     }
   },
   created() {
     this.getList()
   },
   methods: {
+    closed() {
+      this.$refs.edit.dialogVisible()
+    },
     dialogVisible(visible) {
       this.dialogFormVisible = visible
-      this.$nextTick(() => {
-        this.$refs['dataForm'].clearValidate()
-      })
     },
     getList() {
       this.listLoading = true
       fetchList(this.listQuery).then(response => {
+        response.data.items.map(item => {
+          this.$set(item, 'loading', false)
+          return item
+        })
         this.list = response.data.items
-        this.total = response.data.total
-
         // Just to simulate the time of the request
         setTimeout(() => {
           this.listLoading = false
         }, 1.5 * 1000)
       })
     },
-    handleModifyStatus(row, status) {
-      this.$message({
-        message: '操作Success',
-        type: 'success'
-      })
-      row.status = status
-    },
-    sortChange(data) {
-      const { prop, order } = data
-      if (prop === 'id') {
-        this.sortByID(order)
-      }
-    },
-    sortByID(order) {
-      if (order === 'ascending') {
-        this.listQuery.sort = '+id'
-      } else {
-        this.listQuery.sort = '-id'
-      }
-      this.handleFilter()
-    },
     resetTemp() {
-      this.temp = {
-        id: undefined,
-        importance: 1,
-        remark: '',
-        timestamp: new Date(),
-        title: '',
-        status: 'published',
-        type: ''
-      }
+      this.temp = new NickNameObject(undefined, '', '', '', '', '', '')
+    },
+    handleSearch() {
+      this.getList()
     },
     handleCreate() {
       this.resetTemp()
       this.dialogStatus = 'create'
       this.dialogFormVisible = true
-      this.$nextTick(() => {
-        this.$refs['dataForm'].clearValidate()
-      })
     },
     handleUpdate(row) {
       this.temp = Object.assign({}, row) // copy obj
       this.dialogStatus = 'update'
       this.dialogFormVisible = true
-      this.$nextTick(() => {
-        this.$refs['dataForm'].clearValidate()
-      })
     },
-    getSortClass: function(key) {
-      const sort = this.listQuery.sort
-      return sort === `+${key}` ? 'ascending' : 'descending'
+    handleModifyStatus(row, status) {
+      row.loading = true
+      const tempData = Object.assign({}, row)
+      tempData.status = status
+      updateNickName(tempData).then(() => {
+        this.$message({
+          message: '操作成功',
+          type: 'success'
+        })
+        setTimeout(() => {
+          row.loading = false
+          row.status = status
+        }, 1.5 * 1000)
+      })
     }
   }
 }
