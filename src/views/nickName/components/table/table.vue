@@ -1,9 +1,9 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <el-input v-model="listQuery.cardName" placeholder="卡名" style="width: 400px; margin-right: 5px" class="filter-item" />
+      <el-input v-model="listQuery.name" placeholder="卡名" style="width: 400px; margin-right: 5px" class="filter-item" />
       <el-input v-model="listQuery.nickName" placeholder="别名" style="width: 400px; margin-right: 5px" class="filter-item" />
-      <el-select v-model="listQuery.type" placeholder="类型" clearable class="filter-item" style="width: 130px">
+      <el-select v-model="listQuery.nkType" placeholder="类型" clearable class="filter-item" style="width: 130px">
         <el-option v-for="item in calendarTypeOptions" :key="item.key" :label="item.display_name+'('+item.key+')'" :value="item.key" />
       </el-select>
       <div style="display: inline-block;margin-left: 200px">
@@ -14,6 +14,9 @@
           添加
         </el-button>
       </div>
+      <el-button class="filter-item" style="float: right" type="info" @click="handlerGetJson">
+        获取Json
+      </el-button>
 
     </div>
 
@@ -21,6 +24,7 @@
       :key="tableKey"
       v-loading="listLoading"
       :data="list"
+      stripe
       border
       fit
       highlight-current-row
@@ -33,27 +37,27 @@
       </el-table-column>
       <el-table-column label="卡名" min-width="150px">
         <template slot-scope="{row}">
-          <span class="link-type" @click="handleUpdate(row)">{{ row.cardName }}</span>
+          <span class="link-type" @click="handleUpdate(row)">{{ row.name }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="别名" min-width="150px">
+      <el-table-column label="别名(自动转换为大写)" min-width="150px">
         <template slot-scope="{row}">
           <span class="link-type" @click="handleUpdate(row)">{{ row.nickName }}</span>
         </template>
       </el-table-column>
       <el-table-column label="类型" width="150px" align="center">
         <template slot-scope="{row}">
-          <span>{{ row.type | typeFilter }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="备注" width="300px" align="center">
-        <template slot-scope="{row}">
-          <span>{{ row.remark }}</span>
+          <span>{{ row.nkType | typeFilter }}</span>
         </template>
       </el-table-column>
       <el-table-column label="上传者" width="150px" align="center">
         <template slot-scope="{row}">
           <span>{{ row.creator }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="备注" width="300px" align="center">
+        <template slot-scope="{row}">
+          <span>{{ row.remark }}</span>
         </template>
       </el-table-column>
       <el-table-column label="状态" class-name="status-col" width="150px">
@@ -65,15 +69,24 @@
       </el-table-column>
       <el-table-column label="操作" align="center" width="230" class-name="small-padding fixed-width">
         <template slot-scope="{row}">
-          <el-button type="primary" size="mini" @click="handleUpdate(row)">
+          <el-button v-if="row.status!==1" type="primary" size="mini" @click="handleUpdate(row)">
             编辑
           </el-button>
-          <el-button v-if="row.status!==1" size="mini" type="success" :loading="row.loading" @click="handleModifyStatus(row,1)">
+          <el-button v-if="row.status!==1 && checkPermission(['admin'])" size="mini" type="success" :loading="row.loading" @click="handleModifyStatus(row,1)">
             录用
           </el-button>
-          <el-button v-if="row.status===1" size="mini" type="danger" :loading="row.loading" @click="handleModifyStatus(row,0)">
+          <el-button v-if="row.status===1 && checkPermission(['admin'])" size="mini" type="warning" :loading="row.loading" @click="handleModifyStatus(row,0)">
             取消
           </el-button>
+          <el-popconfirm
+            title="确定删除？"
+            @onConfirm="handleDelete(row)"
+          >
+            <el-button v-if="checkPermission(['admin'])" slot="reference" type="danger" size="mini" :loading="row.loading" style="margin-left:10px">
+              删除
+            </el-button>
+          </el-popconfirm>
+
         </template>
       </el-table-column>
     </el-table>
@@ -84,10 +97,11 @@
 </template>
 
 <script>
-import { fetchList, updateNickName } from '@/api/article'
+import { deleteNickName, fetchList, getJson, useNickName } from '@/api/nickName'
 import waves from '@/directive/waves' // waves directive
 import NickEdit from '@/views/nickName/components/table/components/edit.vue'
 import NickNameObject from '@/views/nickName/components/nickName'
+import checkPermission from '@/utils/permission'
 
 const calendarTypeOptions = [
   { key: 0, display_name: '单卡' },
@@ -123,9 +137,9 @@ export default {
       listLoading: true,
       temp: NickNameObject,
       listQuery: {
-        cardName: undefined,
+        name: undefined,
         nickName: undefined,
-        type: undefined
+        nkType: undefined
       },
       calendarTypeOptions,
       statusOptions: ['published', 'draft', 'deleted'],
@@ -141,28 +155,45 @@ export default {
     this.getList()
   },
   methods: {
+    checkPermission,
     closed() {
-      this.$refs.edit.dialogVisible()
+      this.$refs.edit.clearList()
     },
     dialogVisible(visible) {
+      this.getList()
       this.dialogFormVisible = visible
     },
     getList() {
       this.listLoading = true
       fetchList(this.listQuery).then(response => {
-        response.data.items.map(item => {
+        response.data.map(item => {
           this.$set(item, 'loading', false)
           return item
         })
-        this.list = response.data.items
-        // Just to simulate the time of the request
-        setTimeout(() => {
-          this.listLoading = false
-        }, 1.5 * 1000)
+        this.list = response.data
+        this.listLoading = false
       })
     },
     resetTemp() {
       this.temp = new NickNameObject(undefined, '', '', '', '', '', '')
+    },
+    handlerGetJson() {
+      getJson().then((res) => {
+        this.saveJSON(res.data, 'nickname.json')
+      })
+    },
+    saveJSON(jsonData, asFilename) {
+      const filename = asFilename || `${(new Date()).toISOString()}.json`
+      const data = typeof jsonData === 'object' ? JSON.stringify(jsonData, undefined, 2) : jsonData
+      const blob = new Blob([data], { type: 'text/json' })
+      const link = document.createElement('a')
+      link.setAttribute('style', 'display: none')
+      link.download = filename
+      link.href = window.URL.createObjectURL(blob)
+      link.dataset.downloadurl = ['text/json', link.download, link.href].join(':')
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
     },
     handleSearch() {
       this.getList()
@@ -177,19 +208,29 @@ export default {
       this.dialogStatus = 'update'
       this.dialogFormVisible = true
     },
-    handleModifyStatus(row, status) {
+    handleDelete(row) {
       row.loading = true
       const tempData = Object.assign({}, row)
-      tempData.status = status
-      updateNickName(tempData).then(() => {
+      deleteNickName(tempData).then(() => {
         this.$message({
           message: '操作成功',
           type: 'success'
         })
-        setTimeout(() => {
-          row.loading = false
-          row.status = status
-        }, 1.5 * 1000)
+        row.loading = false
+        this.getList()
+      })
+    },
+    handleModifyStatus(row, status) {
+      row.loading = true
+      const tempData = Object.assign({}, row)
+      tempData.status = status
+      useNickName(tempData).then(() => {
+        this.$message({
+          message: '操作成功',
+          type: 'success'
+        })
+        row.loading = false
+        row.status = status
       })
     }
   }

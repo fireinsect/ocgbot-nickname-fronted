@@ -6,7 +6,6 @@
         v-loading="listLoading"
         style="margin-left: 20px"
         :data="list"
-        border
         fit
         highlight-current-row
         max-height="350px"
@@ -16,9 +15,9 @@
             <span>{{ row.cardId }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="cardName" prop="cardName" align="center" min-width="80px">
+        <el-table-column label="name" prop="name" align="center" min-width="80px">
           <template slot-scope="{row}">
-            <span>{{ row.cardName }}</span>
+            <span>{{ row.name }}</span>
           </template>
         </el-table-column>
       </el-table>
@@ -30,8 +29,8 @@
         label-width="70px"
         style="width: 400px; margin-left:50px;"
       >
-        <el-form-item label="类型" prop="type">
-          <el-select v-model="data.type" class="filter-item" placeholder="请选择">
+        <el-form-item label="类型" prop="nkType">
+          <el-select v-model="data.nkType" class="filter-item" placeholder="请选择">
             <el-option
               v-for="item in calendarTypeOptions"
               :key="item.key"
@@ -40,9 +39,9 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="卡名" prop="cardName">
-          <el-input v-model="data.cardName" placeholder="请输入卡名" />
-          <el-button type="mini" icon="el-icon-search" @click="getList" />
+        <el-form-item label="卡名" prop="name">
+          <el-input v-model="data.name" placeholder="请输入卡名" />
+          <el-button type="mini" icon="el-icon-search" @click="getList(data.name)" />
         </el-form-item>
         <el-form-item label="别名" prop="nickName">
           <el-input v-model="data.nickName" placeholder="请输入别名" />
@@ -66,7 +65,7 @@
       <el-button @click="dialogVisible">
         取消
       </el-button>
-      <el-button type="primary" @click="updateData">
+      <el-button type="primary" :loading="confirmLoading" @click="updateData">
         确定
       </el-button>
     </div>
@@ -75,7 +74,7 @@
 </template>
 
 <script>
-import { fetchCardList, updateNickName } from '@/api/article'
+import { addNickName, fetchCardList, updateNickName } from '@/api/nickName'
 import NickNameObject from '@/views/nickName/components/nickName'
 
 const calendarTypeOptions = [
@@ -95,9 +94,10 @@ export default {
       listLoading: false,
       queryList: [],
       list: [],
+      confirmLoading: false,
       rules: {
-        type: [{ required: true, message: '请选择类型', trigger: 'change' }],
-        cardName: [{ required: true, message: '请输入卡名', tigger: 'change' }],
+        nkType: [{ required: true, message: '请选择类型', trigger: 'change' }],
+        name: [{ required: true, message: '请输入卡名', tigger: 'change' }],
         nickName: [{ required: true, message: '请输入别名', tigger: 'change' }]
       }
     }
@@ -108,31 +108,45 @@ export default {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
           const tempData = Object.assign({}, this.data)
-          updateNickName(tempData).then(() => {
-            that.dialogVisible()
-            this.$notify({
-              title: 'Success',
-              message: '操作成功',
-              type: 'success',
-              duration: 2000
+          this.confirmLoading = true
+          if (tempData.id === 0 || tempData.id == null) {
+            addNickName(tempData).then(() => {
+              that.dialogVisible()
+              this.$notify({
+                title: 'Success',
+                message: '操作成功',
+                type: 'success',
+                duration: 2000
+              })
+              this.confirmLoading = false
             })
-          })
+          } else {
+            updateNickName(tempData).then(() => {
+              that.dialogVisible()
+              this.$notify({
+                title: 'Success',
+                message: '操作成功',
+                type: 'success',
+                duration: 2000
+              })
+              this.confirmLoading = false
+            })
+          }
         }
       })
     },
-    getList() {
+    getList(name) {
       this.listLoading = true
-      fetchCardList(this.queryList).then(response => {
-        this.list = response.data.items
-
-        // Just to simulate the time of the request
-        setTimeout(() => {
-          this.listLoading = false
-        }, 1.5 * 1000)
+      fetchCardList(name).then(response => {
+        this.list = response.data
+        this.listLoading = false
       })
     },
-    dialogVisible() {
+    clearList() {
       this.list = []
+    },
+    dialogVisible() {
+      this.clearList()
       this.$emit('dialogVisible', false)
     }
   }
