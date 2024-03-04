@@ -14,6 +14,8 @@
 <script>
 // import openWindow from '@/utils/open-window'
 
+import openWindow from '@/utils/open-window'
+
 export default {
   name: 'SocialSignin',
   methods: {

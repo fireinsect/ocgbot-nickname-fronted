@@ -1,12 +1,17 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <el-input v-model="listQuery.name" placeholder="卡名" style="width: 400px; margin-right: 5px" class="filter-item" />
-      <el-input v-model="listQuery.nickName" placeholder="别名" style="width: 400px; margin-right: 5px" class="filter-item" />
-      <el-select v-model="listQuery.nkType" placeholder="类型" clearable class="filter-item" style="width: 130px">
-        <el-option v-for="item in calendarTypeOptions" :key="item.key" :label="item.display_name+'('+item.key+')'" :value="item.key" />
-      </el-select>
-      <div style="display: inline-block;margin-left: 200px">
+      <el-input v-model="listQuery.name" placeholder="卡名" style="width: 300px; margin-right: 5px" class="filter-item" />
+      <el-input v-model="listQuery.nickName" placeholder="别名" style="width: 300px; margin-right: 5px" class="filter-item" />
+      <span class="form-option">
+        <el-select v-model="listQuery.nkType" placeholder="类型" clearable class="filter-item" style="width: 147px;min-width: 70px;margin-right: 5px">
+          <el-option v-for="item in nkTypeOptions" :key="item.key" :label="item.display_name" :value="item.key" />
+        </el-select>
+        <el-select v-model="listQuery.status" placeholder="状态" clearable class="filter-item" style="width: 147px;min-width: 70px;">
+          <el-option v-for="item in statusOptions" :key="item.key" :label="item.display_name" :value="item.key" />
+        </el-select>
+      </span>
+      <div style="display: inline-block;">
         <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="handleSearch">
           搜索
         </el-button>
@@ -17,12 +22,8 @@
       <el-button class="filter-item" style="float: right" type="info" @click="handlerGetJson">
         获取Json
       </el-button>
-
     </div>
-
     <el-table
-      :key="tableKey"
-      v-loading="listLoading"
       :data="list"
       stripe
       border
@@ -30,7 +31,7 @@
       highlight-current-row
       style="width: 100%;"
     >
-      <el-table-column label="ID" prop="id" align="center" width="80">
+      <el-table-column label="ID" prop="id" align="center" width="80" sortable>
         <template slot-scope="{row}">
           <span>{{ row.id }}</span>
         </template>
@@ -60,7 +61,11 @@
           <span>{{ row.remark }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="状态" class-name="status-col" width="150px">
+      <el-table-column
+        label="状态"
+        class-name="status-col"
+        width="150px"
+      >
         <template slot-scope="{row}">
           <el-tag :type="row.status | statusFilter">
             {{ row.status===0?"待审核":"已提交" }}
@@ -90,7 +95,7 @@
         </template>
       </el-table-column>
     </el-table>
-    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible" @close="closed">
+    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible" :width="dialogWidth" :close-on-click-modal="false" @close="closed">
       <NickEdit ref="edit" :data="temp" @dialogVisible="dialogVisible" />
     </el-dialog>
   </div>
@@ -103,13 +108,13 @@ import NickEdit from '@/views/nickName/components/table/components/edit.vue'
 import NickNameObject from '@/views/nickName/components/nickName'
 import checkPermission from '@/utils/permission'
 
-const calendarTypeOptions = [
+const nkTypeOptions = [
   { key: 0, display_name: '单卡' },
   { key: 1, display_name: '一类卡' }
 ]
 
 // arr to obj, such as { CN : "China", US : "USA" }
-const calendarTypeKeyValue = calendarTypeOptions.reduce((acc, cur) => {
+const calendarTypeKeyValue = nkTypeOptions.reduce((acc, cur) => {
   acc[cur.key] = cur.display_name
   return acc
 }, {})
@@ -135,14 +140,19 @@ export default {
       tableKey: 0,
       list: null,
       listLoading: true,
+      dialogWidth: '50%',
       temp: NickNameObject,
       listQuery: {
         name: undefined,
         nickName: undefined,
-        nkType: undefined
+        nkType: undefined,
+        status: undefined
       },
-      calendarTypeOptions,
-      statusOptions: ['published', 'draft', 'deleted'],
+      nkTypeOptions: nkTypeOptions,
+      statusOptions: [
+        { key: 0, display_name: '待审核' },
+        { key: 1, display_name: '已提交' }
+      ],
       dialogFormVisible: false,
       dialogStatus: '',
       textMap: {
@@ -153,9 +163,18 @@ export default {
   },
   created() {
     this.getList()
+    this.setWidth()
   },
   methods: {
     checkPermission,
+    setWidth() {
+      const vw = window.screen.width
+      if (vw < 820) {
+        this.dialogWidth = '90%'
+      } else {
+        this.dialogWidth = '50%'
+      }
+    },
     closed() {
       this.$refs.edit.clearList()
     },
@@ -204,9 +223,11 @@ export default {
       this.dialogFormVisible = true
     },
     handleUpdate(row) {
-      this.temp = Object.assign({}, row) // copy obj
-      this.dialogStatus = 'update'
-      this.dialogFormVisible = true
+      if (row.status === 0 || this.checkPermission(['admin'])) {
+        this.temp = Object.assign({}, row) // copy obj
+        this.dialogStatus = 'update'
+        this.dialogFormVisible = true
+      }
     },
     handleDelete(row) {
       row.loading = true
@@ -236,3 +257,10 @@ export default {
   }
 }
 </script>
+<style scoped>
+@media screen and (min-width: 1200px) {
+  .form-option {
+    margin-right: 50px;
+  }
+}
+</style>

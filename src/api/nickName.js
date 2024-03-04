@@ -22,6 +22,14 @@ export function getJson() {
   })
 }
 
+export function getCard(query) {
+  return request({
+    url: '/nickName/getCard',
+    method: 'get',
+    params: query
+  })
+}
+
 export function useNickName(data) {
   return request({
     url: '/nickName/useName',
@@ -30,7 +38,6 @@ export function useNickName(data) {
   })
 }
 
-// 需要实现自动判断是更新还是创建
 export function updateNickName(data) {
   return request({
     url: '/nickName/update',

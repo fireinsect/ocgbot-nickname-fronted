@@ -8,7 +8,7 @@ import getPageTitle from '@/utils/get-page-title'
 
 NProgress.configure({ showSpinner: false }) // NProgress Configuration
 
-const whiteList = ['/login', '/auth-redirect'] // no redirect whitelist
+const whiteList = ['/login', '/auth-redirect', '/nickName'] // no redirect whitelist
 
 router.beforeEach(async(to, from, next) => {
   // start progress bar
@@ -29,6 +29,15 @@ router.beforeEach(async(to, from, next) => {
       // determine whether the user has obtained his permission roles through getInfo
       const hasRoles = store.getters.roles && store.getters.roles.length > 0
       if (hasRoles) {
+        if (store.getters.roles.indexOf('visitor' !== -1)) {
+          const { roles } = await store.dispatch('user/getInfo')
+
+          // generate accessible routes map based on roles
+          const accessRoutes = await store.dispatch('permission/generateRoutes', roles)
+
+          // dynamically add accessible routes
+          router.addRoutes(accessRoutes)
+        }
         next()
       } else {
         try {
@@ -58,11 +67,28 @@ router.beforeEach(async(to, from, next) => {
     /* has no token*/
 
     if (whiteList.indexOf(to.path) !== -1) {
-      // in the free login whitelist, go directly
+      const hasRoles = store.getters.roles && store.getters.roles.length > 0
+      if (!hasRoles) {
+        const { roles } = await store.dispatch('user/getInfo')
+        // generate accessible routes map based on roles
+        const accessRoutes = await store.dispatch('permission/generateRoutes', roles)
+
+        // dynamically add accessible routes
+        router.addRoutes(accessRoutes)
+        next({ ...to, replace: true })
+      }
       next()
     } else {
+      const { roles } = await store.dispatch('user/getInfo')
+
+      // generate accessible routes map based on roles
+      const accessRoutes = await store.dispatch('permission/generateRoutes', roles)
+      console.log(store.getters.roles)
+      // dynamically add accessible routes
+      router.addRoutes(accessRoutes)
       // other pages that do not have permission to access are redirected to the login page.
-      next(`/login?redirect=${to.path}`)
+      next(`/nickName`)
+      // next(`/login?redirect=${to.path}`)
       NProgress.done()
     }
   }

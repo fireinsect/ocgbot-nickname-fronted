@@ -6,7 +6,7 @@ function resolve(dir) {
   return path.join(__dirname, dir)
 }
 
-const name = defaultSettings.title || 'vue Element Admin' // page title
+const name = defaultSettings.title || '????' // page title
 
 // If your port is set to 80,
 // use administrator privileges to execute the command line.
@@ -33,10 +33,23 @@ module.exports = {
     port: port,
     open: true,
     proxy: {
-      '/dev-api': {
-        target: 'http://localhost:8080'
+      '/': {
+        target: 'http://localhost:1796'
       }
+      // '/': {
+      //   target: 'http://api.nickname.fireinsect.top'
+      // }
+
     },
+    // proxy: {
+    //   '/dev-api': {
+    //     target: 'http://122.51.216.103:1796',
+    //     pathRewrite: {
+    //       '^/dev-api': '/'
+    //     }
+    //   }
+    //
+    // },
     overlay: {
       warnings: false,
       errors: true
@@ -45,7 +58,7 @@ module.exports = {
   },
   configureWebpack: {
     // provide the app's title in webpack's name field, so that
-    // it can be accessed in index.html to inject the correct title.
+    // it can be accessed in .html to inject the correct title.
     name: name,
     resolve: {
       alias: {
