@@ -1,8 +1,8 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <el-input v-model="listQuery.name" placeholder="卡名" style="width: 300px; margin-right: 5px" class="filter-item" />
-      <el-input v-model="listQuery.nickName" placeholder="别名" style="width: 300px; margin-right: 5px" class="filter-item" />
+      <el-input v-model="listQuery.name" placeholder="卡名" style="width: 300px; margin-right: 5px" class="filter-item" @keyup.enter.native="handleSearch" />
+      <el-input v-model="listQuery.nickName" placeholder="别名" style="width: 300px; margin-right: 5px" class="filter-item" @keyup.enter.native="handleSearch" />
       <span class="form-option">
         <el-select v-model="listQuery.nkType" placeholder="类型" clearable class="filter-item" style="width: 147px;min-width: 70px;margin-right: 5px">
           <el-option v-for="item in nkTypeOptions" :key="item.key" :label="item.display_name" :value="item.key" />
@@ -24,6 +24,7 @@
       </el-button>
     </div>
     <el-table
+      v-loading="listLoading"
       :data="resData.list"
       stripe
       border
@@ -196,7 +197,7 @@ export default {
       })
     },
     resetTemp() {
-      this.temp = new NickNameObject(undefined, '', '', '', '', '', '', 1, 10)
+      this.temp = new NickNameObject(undefined, '', '', '', '', '', '', 1, 20)
     },
     handlerGetJson() {
       getJson().then((res) => {
@@ -217,6 +218,7 @@ export default {
       document.body.removeChild(link)
     },
     handleSearch() {
+      this.listQuery.pageNum = 1
       this.getList()
     },
     handleCreate() {

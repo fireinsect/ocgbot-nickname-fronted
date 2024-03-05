@@ -33,12 +33,12 @@ module.exports = {
     port: port,
     open: true,
     proxy: {
-      '/': {
-        target: 'http://localhost:1796'
-      }
       // '/': {
-      //   target: 'http://api.nickname.fireinsect.top'
+      //   target: 'http://localhost:1796'
       // }
+      '/': {
+        target: 'http://api.nickname.fireinsect.top'
+      }
 
     },
     // proxy: {
