@@ -24,7 +24,7 @@
       </el-button>
     </div>
     <el-table
-      :data="list"
+      :data="resData.list"
       stripe
       border
       fit
@@ -95,6 +95,7 @@
         </template>
       </el-table-column>
     </el-table>
+    <pagination v-show="resData.total>0" :total="resData.total" :page.sync="listQuery.pageNum" :limit.sync="listQuery.pageSize" @pagination="getList" />
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible" :width="dialogWidth" :close-on-click-modal="false" @close="closed">
       <NickEdit ref="edit" :data="temp" @dialogVisible="dialogVisible" />
     </el-dialog>
@@ -107,6 +108,7 @@ import waves from '@/directive/waves' // waves directive
 import NickEdit from '@/views/nickName/components/table/components/edit.vue'
 import NickNameObject from '@/views/nickName/components/nickName'
 import checkPermission from '@/utils/permission'
+import Pagination from '@/components/Pagination'
 
 const nkTypeOptions = [
   { key: 0, display_name: '单卡' },
@@ -121,7 +123,7 @@ const calendarTypeKeyValue = nkTypeOptions.reduce((acc, cur) => {
 
 export default {
   name: 'NickTable',
-  components: { NickEdit },
+  components: { NickEdit, Pagination },
   directives: { waves },
   filters: {
     statusFilter(status) {
@@ -138,15 +140,15 @@ export default {
   data() {
     return {
       tableKey: 0,
-      list: null,
+      resData: null,
       listLoading: true,
       dialogWidth: '50%',
       temp: NickNameObject,
       listQuery: {
-        name: undefined,
-        nickName: undefined,
-        nkType: undefined,
-        status: undefined
+        total: 0,
+        list: [],
+        pageNum: 1,
+        pageSize: 20
       },
       nkTypeOptions: nkTypeOptions,
       statusOptions: [
@@ -185,16 +187,16 @@ export default {
     getList() {
       this.listLoading = true
       fetchList(this.listQuery).then(response => {
-        response.data.map(item => {
+        response.data.list.map(item => {
           this.$set(item, 'loading', false)
           return item
         })
-        this.list = response.data
+        this.resData = response.data
         this.listLoading = false
       })
     },
     resetTemp() {
-      this.temp = new NickNameObject(undefined, '', '', '', '', '', '')
+      this.temp = new NickNameObject(undefined, '', '', '', '', '', '', 1, 10)
     },
     handlerGetJson() {
       getJson().then((res) => {

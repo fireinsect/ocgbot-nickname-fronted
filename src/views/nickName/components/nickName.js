@@ -1,5 +1,5 @@
 export default class NickNameObject {
-  constructor(id, name, nickName, type, creator, remark, status) {
+  constructor(id, name, nickName, type, creator, remark, status, pageNum, pageSize) {
     this.id = id
     this.name = name
     this.nickName = nickName
@@ -7,5 +7,7 @@ export default class NickNameObject {
     this.creator = creator
     this.remark = remark
     this.status = status
+    this.pageNum = pageNum
+    this.pageSize = pageSize
   }
 }
