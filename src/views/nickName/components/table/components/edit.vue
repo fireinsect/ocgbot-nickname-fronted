@@ -46,7 +46,7 @@
         :data="list"
         fit
         highlight-current-row
-        height="350px"
+        style="min-height: 320px"
       >
         <span>
 
@@ -60,13 +60,12 @@
             <template slot-scope="{row}">
               <el-popover
                 v-show="hoverCardId===row.cardId"
-                ref="hover-name"
+                :ref="'hover'+row.cardId"
                 placement="bottom"
                 :title="row.name"
                 width="200px"
                 close-delay="50"
                 trigger="hover"
-                content="这是一段内容,这是一段内容,这是一段内容,这是一段内容。"
               >
                 <el-image
                   fit="contain"
@@ -74,7 +73,7 @@
                   :src="'https://fireinsect.top/ocgBot/ocg-bot/src/static/pics/'+row.cardId+'.jpg'"
                 />
               </el-popover>
-              <span v-popover:hover-name @mouseover="hoverHandler(row.cardId)" @click="paddingName(row.name)">{{ row.name }}</span>
+              <span v-popover="'hover'+row.cardId" @mouseover="hoverHandler(row.cardId)" @click="paddingName(row.name)">{{ row.name }}</span>
             </template>
           </el-table-column>
         </span>
@@ -136,8 +135,8 @@ export default {
       })
   },
   methods: {
-    hoverHandler(carId) {
-      this.hoverCardId = carId
+    hoverHandler(cardId) {
+      this.hoverCardId = cardId
       // this.hoverModel = !this.hoverModel
     },
     paddingName(name) {

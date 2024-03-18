@@ -96,7 +96,7 @@
         </template>
       </el-table-column>
     </el-table>
-    <pagination v-show="resData.total>0" :total="resData.total" :page.sync="listQuery.pageNum" :limit.sync="listQuery.pageSize" @pagination="getList" />
+    <pagination v-show="resData.total>0" :layout="layout" :pager-count="pageCount" :total="resData.total" :page.sync="listQuery.pageNum" :limit.sync="listQuery.pageSize" @pagination="getList" />
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible" :width="dialogWidth" :close-on-click-modal="false" @close="closed">
       <NickEdit ref="edit" :data="temp" @dialogVisible="dialogVisible" />
     </el-dialog>
@@ -140,6 +140,8 @@ export default {
   },
   data() {
     return {
+      layout: 'prev, pager, next ,sizes',
+      pageCount: 7,
       tableKey: 0,
       resData: null,
       listLoading: true,
@@ -165,6 +167,13 @@ export default {
     }
   },
   created() {
+    if (document.body.clientWidth < 992) {
+      this.layout = 'prev, pager, next'
+      this.pageCount = 4
+    } else {
+      this.layout = 'prev, pager, next ,sizes'
+      this.pageCount = 7
+    }
     this.getList()
     this.setWidth()
   },

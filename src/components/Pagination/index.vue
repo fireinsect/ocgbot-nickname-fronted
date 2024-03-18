@@ -8,6 +8,7 @@
       :page-sizes="pageSizes"
       :total="total"
       v-bind="$attrs"
+      :pager-count="pagerCount"
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
     />
@@ -20,6 +21,10 @@ import { scrollTo } from '@/utils/scroll-to'
 export default {
   name: 'Pagination',
   props: {
+    pagerCount: {
+      type: Number,
+      default: 7
+    },
     total: {
       required: true,
       type: Number
@@ -40,7 +45,7 @@ export default {
     },
     layout: {
       type: String,
-      default: 'total, sizes, prev, pager, next, jumper'
+      default: ' prev, pager, next ,sizes'
     },
     background: {
       type: Boolean,
