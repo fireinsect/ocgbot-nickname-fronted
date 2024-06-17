@@ -7,9 +7,9 @@ export function fetchList(query) {
     params: query
   })
 }
-export function fetchCardList(query) {
+export function getSameNickName(query) {
   return request({
-    url: '/nickName/getList',
+    url: '/nickName/getAllSameNickName',
     method: 'get',
     params: query
   })
@@ -41,6 +41,14 @@ export function useNickName(data) {
 export function updateNickName(data) {
   return request({
     url: '/nickName/update',
+    method: 'post',
+    data
+  })
+}
+
+export function check(data) {
+  return request({
+    url: '/nickName/check',
     method: 'post',
     data
   })

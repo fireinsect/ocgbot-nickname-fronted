@@ -92,7 +92,7 @@
 </template>
 
 <script>
-import { addNickName, getCard, updateNickName } from '@/api/nickName'
+import { addNickName, check, getCard, updateNickName } from '@/api/nickName'
 import NickNameObject from '@/views/nickName/components/nickName'
 import { Message } from 'element-ui'
 
@@ -151,63 +151,131 @@ export default {
         if (valid) {
           const tempData = Object.assign({}, this.data)
           this.confirmLoading = true
-          if (tempData.id === 0 || tempData.id == null) {
-            addNickName(tempData).then((res) => {
-              this.confirmLoading = false
-              if (res.code === 204) {
-                Message({
-                  message: res.message || 'Error',
-                  type: 'error',
-                  duration: 5 * 1000
-                })
-              } else {
-                that.dialogVisible()
-                this.$notify({
-                  title: 'Success',
-                  message: '添加成功啦(￣▽￣)~*',
-                  type: 'success',
-                  duration: 2000
-                })
-                const positions = ['bottom-right', 'bottom-left', 'top-left', 'top-right']
-                // const emo = ['٩(๑>◡<๑)۶', '(ﾉ・∀・)ﾉ ', '(・▽・*) ', 'ヾ(✿・▽・)ノ', 'φ(>ω<*) ', '(=´ω｀=)', '(｀・ω・´)', '(｡◕ˇ∀ˇ◕)']
-                // const messages = ['感谢你的贡献！', '谢谢你！', '好耶！', '别名增加了！', '牛牛减1cm！', '谢谢你的贡献！', '等待审核吧！', '记得留下你的名字吧！', '牛牛变大魔法！', '丢~', '嘟嘟嘟！']
-                const messages = that.messages
-                const emo = that.emo
-                for (let i = 0; i < 20; i++) {
-                  setTimeout(function() {
-                    const offset = Math.floor(Math.random() * vh)
-                    const position = positions[Math.floor(Math.random() * positions.length)]
-                    that.$notify({
-                      title: messages[Math.floor(Math.random() * messages.length)] + emo[Math.floor(Math.random() * emo.length)],
-                      message: messages[Math.floor(Math.random() * messages.length)] + emo[Math.floor(Math.random() * emo.length)],
-                      duration: 2000,
-                      position: position,
-                      offset: offset
-                    })
-                  }, 600 * i)
+          check(tempData).then(checkData => {
+            console.log(checkData)
+            if (checkData.data.length > 0) {
+              console.log('asdasdasda')
+              this.$confirm('当前卡存在相同别名，是否继续添加？', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+              }).then(() => {
+                if (tempData.id === 0 || tempData.id == null) {
+                  addNickName(tempData).then((res) => {
+                    if (res.code === 204) {
+                      Message({
+                        message: res.message || 'Error',
+                        type: 'error',
+                        duration: 5 * 1000
+                      })
+                    } else {
+                      that.dialogVisible()
+                      this.$notify({
+                        title: 'Success',
+                        message: '添加成功啦(￣▽￣)~*',
+                        type: 'success',
+                        duration: 2000
+                      })
+                      const positions = ['bottom-right', 'bottom-left', 'top-left', 'top-right']
+                      // const emo = ['٩(๑>◡<๑)۶', '(ﾉ・∀・)ﾉ ', '(・▽・*) ', 'ヾ(✿・▽・)ノ', 'φ(>ω<*) ', '(=´ω｀=)', '(｀・ω・´)', '(｡◕ˇ∀ˇ◕)']
+                      // const messages = ['感谢你的贡献！', '谢谢你！', '好耶！', '别名增加了！', '牛牛减1cm！', '谢谢你的贡献！', '等待审核吧！', '记得留下你的名字吧！', '牛牛变大魔法！', '丢~', '嘟嘟嘟！']
+                      const messages = that.messages
+                      const emo = that.emo
+                      for (let i = 0; i < 20; i++) {
+                        setTimeout(function() {
+                          const offset = Math.floor(Math.random() * vh)
+                          const position = positions[Math.floor(Math.random() * positions.length)]
+                          that.$notify({
+                            title: messages[Math.floor(Math.random() * messages.length)] + emo[Math.floor(Math.random() * emo.length)],
+                            message: messages[Math.floor(Math.random() * messages.length)] + emo[Math.floor(Math.random() * emo.length)],
+                            duration: 2000,
+                            position: position,
+                            offset: offset
+                          })
+                        }, 600 * i)
+                      }
+                    }
+                  })
+                } else {
+                  updateNickName(tempData).then((res) => {
+                    if (res.code === 204) {
+                      Message({
+                        message: res.message || 'Error',
+                        type: 'error',
+                        duration: 5 * 1000
+                      })
+                    } else {
+                      that.dialogVisible()
+                      this.$notify({
+                        title: 'Success',
+                        message: '操作成功',
+                        type: 'success',
+                        duration: 2000
+                      })
+                    }
+                  })
                 }
-              }
-            })
-          } else {
-            updateNickName(tempData).then((res) => {
-              this.confirmLoading = false
-              if (res.code === 204) {
-                Message({
-                  message: res.message || 'Error',
-                  type: 'error',
-                  duration: 5 * 1000
+              })
+            } else {
+              if (tempData.id === 0 || tempData.id == null) {
+                addNickName(tempData).then((res) => {
+                  if (res.code === 204) {
+                    Message({
+                      message: res.message || 'Error',
+                      type: 'error',
+                      duration: 5 * 1000
+                    })
+                  } else {
+                    that.dialogVisible()
+                    this.$notify({
+                      title: 'Success',
+                      message: '添加成功啦(￣▽￣)~*',
+                      type: 'success',
+                      duration: 2000
+                    })
+                    const positions = ['bottom-right', 'bottom-left', 'top-left', 'top-right']
+                    // const emo = ['٩(๑>◡<๑)۶', '(ﾉ・∀・)ﾉ ', '(・▽・*) ', 'ヾ(✿・▽・)ノ', 'φ(>ω<*) ', '(=´ω｀=)', '(｀・ω・´)', '(｡◕ˇ∀ˇ◕)']
+                    // const messages = ['感谢你的贡献！', '谢谢你！', '好耶！', '别名增加了！', '牛牛减1cm！', '谢谢你的贡献！', '等待审核吧！', '记得留下你的名字吧！', '牛牛变大魔法！', '丢~', '嘟嘟嘟！']
+                    const messages = that.messages
+                    const emo = that.emo
+                    for (let i = 0; i < 20; i++) {
+                      setTimeout(function() {
+                        const offset = Math.floor(Math.random() * vh)
+                        const position = positions[Math.floor(Math.random() * positions.length)]
+                        that.$notify({
+                          title: messages[Math.floor(Math.random() * messages.length)] + emo[Math.floor(Math.random() * emo.length)],
+                          message: messages[Math.floor(Math.random() * messages.length)] + emo[Math.floor(Math.random() * emo.length)],
+                          duration: 2000,
+                          position: position,
+                          offset: offset
+                        })
+                      }, 600 * i)
+                    }
+                  }
                 })
               } else {
-                that.dialogVisible()
-                this.$notify({
-                  title: 'Success',
-                  message: '操作成功',
-                  type: 'success',
-                  duration: 2000
+                updateNickName(tempData).then((res) => {
+                  if (res.code === 204) {
+                    Message({
+                      message: res.message || 'Error',
+                      type: 'error',
+                      duration: 5 * 1000
+                    })
+                  } else {
+                    that.dialogVisible()
+                    this.$notify({
+                      title: 'Success',
+                      message: '操作成功',
+                      type: 'success',
+                      duration: 2000
+                    })
+                  }
                 })
               }
-            })
-          }
+            }
+          })
+
+          this.confirmLoading = false
         }
       })
     },

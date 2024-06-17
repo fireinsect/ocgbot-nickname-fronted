@@ -18,6 +18,9 @@
         <el-button class="filter-item" style="margin-left: 10px;" type="primary" icon="el-icon-edit" @click="handleCreate">
           添加
         </el-button>
+        <el-button v-if="checkPermission(['admin'])" class="filter-item" style="float: right" type="info" @click="getSameNickNameList">
+          获取重复别名列表
+        </el-button>
       </div>
       <el-button class="filter-item" style="float: right" type="info" @click="handlerGetJson">
         获取Json
@@ -96,7 +99,8 @@
         </template>
       </el-table-column>
     </el-table>
-    <pagination v-show="resData.total>0" :layout="layout" :pager-count="pageCount" :total="resData.total" :page.sync="listQuery.pageNum" :limit.sync="listQuery.pageSize" @pagination="getList" />
+    <pagination v-if="isGetSame" v-show="resData.total>0" :layout="layout" :pager-count="pageCount" :total="resData.total" :page.sync="listQuery.pageNum" :limit.sync="listQuery.pageSize" @pagination="getSameNickNameList" />
+    <pagination v-else v-show="resData.total>0" :layout="layout" :pager-count="pageCount" :total="resData.total" :page.sync="listQuery.pageNum" :limit.sync="listQuery.pageSize" @pagination="getList" />
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible" :width="dialogWidth" :close-on-click-modal="false" @close="closed">
       <NickEdit ref="edit" :data="temp" @dialogVisible="dialogVisible" />
     </el-dialog>
@@ -104,7 +108,7 @@
 </template>
 
 <script>
-import { deleteNickName, fetchList, getJson, useNickName } from '@/api/nickName'
+import { deleteNickName, fetchList, getJson, getSameNickName, useNickName } from '@/api/nickName'
 import waves from '@/directive/waves' // waves directive
 import NickEdit from '@/views/nickName/components/table/components/edit.vue'
 import NickNameObject from '@/views/nickName/components/nickName'
@@ -140,6 +144,7 @@ export default {
   },
   data() {
     return {
+      isGetSame: false,
       layout: 'prev, pager, next ,sizes',
       pageCount: 7,
       tableKey: 0,
@@ -195,8 +200,21 @@ export default {
       this.dialogFormVisible = visible
     },
     getList() {
+      this.isGetSame = false
       this.listLoading = true
       fetchList(this.listQuery).then(response => {
+        response.data.list.map(item => {
+          this.$set(item, 'loading', false)
+          return item
+        })
+        this.resData = response.data
+        this.listLoading = false
+      })
+    },
+    getSameNickNameList() {
+      this.isGetSame = true
+      this.listLoading = true
+      getSameNickName(this.listQuery).then(response => {
         response.data.list.map(item => {
           this.$set(item, 'loading', false)
           return item
